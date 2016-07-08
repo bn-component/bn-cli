@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var download = require('download-git-repo')
+var download = require('../lib/download')
 var program = require('commander')
 var exists = require('fs').existsSync
 var path = require('path')
@@ -20,7 +20,7 @@ var checkVersion = require('../lib/check-version')
 
 program
   .usage('<template-name> [project-name]')
-  .option('-c, --clone', 'use git clone')
+  // .option('-c, --clone', 'use git clone')
 
 /**
  * Help.
@@ -29,11 +29,8 @@ program
 program.on('--help', function () {
   console.log('  Examples:')
   console.log()
-  console.log(chalk.gray('    # create a new project with an official template'))
-  console.log('    $ vue init webpack my-project')
-  console.log()
-  console.log(chalk.gray('    # create a new project straight from a github template'))
-  console.log('    $ vue init username/repo my-project')
+  console.log(chalk.gray('    # create a new project with git path'))
+  console.log('    $ bn init xxx.git my-project')
   console.log()
 })
 
@@ -66,7 +63,7 @@ var rawName = program.args[1]
 var inPlace = !rawName || rawName === '.'
 var name = inPlace ? path.relative('../', process.cwd()) : rawName
 var to = path.resolve(rawName || '.')
-var clone = program.clone || false
+// var clone = program.clone || false
 
 if (exists(to)) {
   inquirer.prompt([{
@@ -77,62 +74,11 @@ if (exists(to)) {
     name: 'ok'
   }], function (answers) {
     if (answers.ok) {
-      run()
+      downloadAndGenerate(template)
     }
   })
 } else {
-  run()
-}
-
-/**
- * Check, download and generate the project.
- */
-
-function run () {
-  // check if template is local
-  if (hasSlash && exists(template)) {
-    generate(name, template, to, function (err) {
-      if (err) logger.fatal(err)
-      console.log()
-      logger.success('Generated "%s".', name)
-    })
-  } else {
-    checkVersion(function () {
-      if (!hasSlash) {
-        // use official templates
-        template = 'vuejs-templates/' + template
-        checkDistBranch(template, downloadAndGenerate)
-      } else {
-        downloadAndGenerate(template)
-      }
-    })
-  }
-}
-
-/**
- * Check if the template has a dist branch, if yes, use that.
- *
- * @param {String} template
- * @param {Function} cb
- */
-
-function checkDistBranch (template, cb) {
-  request({
-    url: 'https://api.github.com/repos/' + template + '/branches',
-    headers: {
-      'User-Agent': 'vue-cli'
-    }
-  }, function (err, res, body) {
-    if (err) logger.fatal(err)
-    if (res.statusCode !== 200) {
-      logger.fatal('Template does not exist: ' + template)
-    } else {
-      var hasDist = JSON.parse(body).some(function (branch) {
-        return branch.name === 'dist'
-      })
-      return cb(hasDist ? template + '#dist' : template)
-    }
-  })
+  downloadAndGenerate(template)
 }
 
 /**
@@ -142,10 +88,11 @@ function checkDistBranch (template, cb) {
  */
 
 function downloadAndGenerate (template) {
-  var tmp = '/tmp/vue-template-' + uid()
+  var tmp = '/tmp/bn-template-' + uid()
   var spinner = ora('downloading template')
   spinner.start()
-  download(template, tmp, { clone: clone }, function (err) {
+  // download(template, tmp, { clone: clone }, function (err) {
+  download(template, tmp, null, function (err) {
     spinner.stop()
     process.on('exit', function () {
       rm(tmp)

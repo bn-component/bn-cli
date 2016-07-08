@@ -29,11 +29,11 @@ function monkeyPatchInquirer (answers) {
   }
 }
 
-describe('vue-cli', () => {
+describe('bn-cli', () => {
   const answers = {
-    name: 'vue-cli-test',
-    author: 'John Doe <john@doe.com>',
-    description: 'vue-cli e2e test',
+    name: 'bn-cli-test',
+    author: 'Judy',
+    description: 'bn-cli e2e test',
     preprocessor: {
       less: true,
       sass: true
